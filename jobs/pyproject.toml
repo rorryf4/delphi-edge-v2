@@ -1,0 +1,25 @@
+[project]
+name = "delphi-jobs"
+version = "0.1.0"
+description = "DelphiEdge scheduled jobs: ingestion, seeding and grading"
+requires-python = ">=3.12"
+dependencies = [
+  "psycopg[binary]>=3.2",
+  "httpx>=0.28",
+  "nflreadpy>=0.1.5",
+  "polars>=1.0",
+  "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["delphi_jobs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
