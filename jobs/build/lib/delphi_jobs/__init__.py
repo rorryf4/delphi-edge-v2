@@ -1,1 +1,0 @@
-"""DelphiEdge scheduled jobs."""
