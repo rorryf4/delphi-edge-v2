@@ -21,6 +21,7 @@ python3 -m venv .venv
 scripts/job delphi_jobs.migrate          # apply migrations
 scripts/job delphi_jobs.seed_reference   # leagues, seasons, teams, outlets, experts
 scripts/job delphi_jobs.ingest_games     # games, scores, closing lines (re-runnable)
+scripts/job delphi_jobs.grade            # market benchmark + grades (re-runnable)
 ./scripts/test.sh                                # tests on a local throwaway Postgres
 ```
 
