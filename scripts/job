@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Run a jobs module, e.g.:  scripts/job delphi_jobs.migrate --status
+# Puts jobs/ on the import path directly instead of relying on the editable
+# install's .pth file, which macOS can flag hidden (Python 3.13 skips those).
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export PYTHONPATH="$ROOT/jobs${PYTHONPATH:+:$PYTHONPATH}"
+exec "$ROOT/.venv/bin/python" -m "$@"

@@ -18,7 +18,8 @@ python3 -m venv .venv
 ## Database
 
 ```sh
-.venv/bin/python -m delphi_jobs.migrate          # apply migrations
-.venv/bin/python -m delphi_jobs.seed_reference   # leagues, seasons, teams, experts
+scripts/job delphi_jobs.migrate          # apply migrations
+scripts/job delphi_jobs.seed_reference   # leagues, seasons, teams, outlets, experts
+scripts/job delphi_jobs.ingest_games     # games, scores, closing lines (re-runnable)
 ./scripts/test.sh                                # tests on a local throwaway Postgres
 ```

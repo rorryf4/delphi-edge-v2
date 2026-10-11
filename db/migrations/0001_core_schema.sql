@@ -210,6 +210,8 @@ create index predictions_game_idx on public.predictions(game_id);
 --   4. After kickoff a prediction is locked. A deliberate correction can be
 --      made inside a transaction that runs
 --        set local delphi.allow_locked_edit = 'on';
+--   Rules 3 and 4 wait until the kickoff time is known: while
+--   start_time_tbd is set, starts_at is only a date placeholder.
 create or replace function public.predictions_enforce_integrity()
 returns trigger language plpgsql as $$
 declare
@@ -239,13 +241,14 @@ begin
     end if;
   end if;
 
-  if g.starts_at is not null and new.published_at >= g.starts_at then
+  if g.starts_at is not null and not g.start_time_tbd
+     and new.published_at >= g.starts_at then
     raise exception 'prediction published at % is not before kickoff %',
       new.published_at, g.starts_at;
   end if;
 
   if tg_op = 'UPDATE'
-     and g.starts_at is not null and now() >= g.starts_at
+     and g.starts_at is not null and not g.start_time_tbd and now() >= g.starts_at
      and coalesce(current_setting('delphi.allow_locked_edit', true), '') <> 'on'
      and (new.pick_team_id, new.home_win_prob, new.predicted_home_score,
           new.predicted_away_score, new.predicted_margin, new.predicted_total,
@@ -275,9 +278,10 @@ create or replace function public.predictions_block_locked_delete()
 returns trigger language plpgsql as $$
 declare
   kickoff timestamptz;
+  tbd boolean;
 begin
-  select starts_at into kickoff from public.games where id = old.game_id;
-  if kickoff is not null and now() >= kickoff
+  select starts_at, start_time_tbd into kickoff, tbd from public.games where id = old.game_id;
+  if kickoff is not null and not tbd and now() >= kickoff
      and coalesce(current_setting('delphi.allow_locked_edit', true), '') <> 'on' then
     raise exception 'prediction % is locked: game % has kicked off', old.id, old.game_id;
   end if;
