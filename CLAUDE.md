@@ -10,6 +10,10 @@ Read spec.md first. No features outside the spec without updating the spec.
 - Predictions are locked at kickoff by database triggers. Do not weaken them.
   A deliberate correction uses `set local delphi.allow_locked_edit = 'on'`.
 
+- Head-to-head comparisons between experts use only shared games, per metric.
+  Use the `head_to_head()` SQL function; never compare two experts' overall
+  leaderboard rows directly. Every displayed number shows its game count.
+
 ## Conventions
 - Spreads are from the home team's view, sportsbook style: negative = home favored.
   (nflverse's `spread_line` is the opposite sign; convert on ingestion.)

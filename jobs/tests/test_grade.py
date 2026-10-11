@@ -238,3 +238,54 @@ def test_anon_can_read_grades_and_leaderboard(seeded):
     assert db.execute("select count(*) from grades").fetchone() == (1,)
     assert db.execute("select su_wins from leaderboard").fetchone() == (1,)
     db.execute("reset role")
+
+
+# ---------------------------------------------------------- head to head ---
+def h2h(db, a, b, league=None):
+    cols = ("expert_slug", "shared_games", "su_graded", "su_wins", "su_losses", "su_pushes",
+            "ats_graded", "margin_graded", "margin_mae", "brier_graded")
+    rows = db.execute(f"select {', '.join(cols)} from head_to_head(%s, %s, %s)",
+                      (a, b, league)).fetchall()
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def test_head_to_head_uses_only_shared_games_per_metric(seeded):
+    from factories import expert_id
+    db = seeded
+    g1 = final_game(db, 27, 20, hours_ago=30)
+    g2 = final_game(db, 24, 21, hours_ago=20, home="nyj")
+    g3 = final_game(db, 10, 31, hours_ago=10, home="nyg", away="kc")
+    for g in (g1, g2, g3):
+        add_line(db, g, "nflverse", spread=-3.0, hml=-150, aml=130)
+    # Writer A: all three games; scores only on g1.
+    add_prediction(db, g1, pick_team_id=g1["home"], predicted_home_score=30, predicted_away_score=20)
+    add_prediction(db, g2, pick_team_id=g2["away"])
+    add_prediction(db, g3, pick_team_id=g3["away"])
+    # Writer B: only g2 and g3, with scores on both.
+    b = expert_id(db, "writer-b")
+    add_prediction(db, g2, expert_id=b, pick_team_id=g2["home"],
+                   predicted_home_score=27, predicted_away_score=20)
+    add_prediction(db, g3, expert_id=b, pick_team_id=g3["home"],
+                   predicted_home_score=24, predicted_away_score=21)
+    run(db)
+
+    a_row, b_row = h2h(db, "test-writer", "writer-b")
+    assert a_row["expert_slug"] == "test-writer" and b_row["expert_slug"] == "writer-b"
+    # g1 is excluded: B has no pick there.
+    assert a_row["shared_games"] == b_row["shared_games"] == 2
+    assert (a_row["su_graded"], a_row["su_wins"], a_row["su_losses"]) == (2, 1, 1)
+    assert (b_row["su_graded"], b_row["su_wins"], b_row["su_losses"]) == (2, 1, 1)
+    # Margin: A has no scores on g2 or g3, so there is nothing shared to compare.
+    assert a_row["margin_graded"] == b_row["margin_graded"] == 0
+    assert a_row["margin_mae"] is None and b_row["margin_mae"] is None
+
+    m_row, a2 = h2h(db, "market", "test-writer")
+    assert m_row["shared_games"] == 3
+    assert m_row["margin_graded"] == a2["margin_graded"] == 1    # only g1 has both
+    assert m_row["brier_graded"] == a2["brier_graded"] == 0      # writer gives no probability
+
+
+def test_head_to_head_with_no_shared_games(seeded):
+    rows = h2h(seeded, "market", "nobody")
+    assert [r["shared_games"] for r in rows] == [0, 0]
+    assert [r["su_graded"] for r in rows] == [0, 0]

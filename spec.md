@@ -39,6 +39,12 @@ Grading:
 - Pick accuracy: straight-up and against the spread (all experts)
 - Margin error: average points off (anyone who publishes predicted scores)
 - Brier score: win-probability accuracy (DelphiEdge + market)
+- The market has no ATS record (graded against its own closing line it is
+  meaningless); its ATS shows as N/A. Games without closing moneylines get no
+  market win probability and are left out of its Brier score, not estimated.
+- Every number shows how many games it is based on.
+- Any head-to-head comparison between experts uses only the games both have
+  graded, and for each metric only games where both have that metric.
 
 ## Pages
 1. Leaderboard: all experts ranked, filterable by league and metric
