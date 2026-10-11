@@ -23,3 +23,6 @@ include = ["delphi_jobs*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Import the package from source even if the editable install is skipped
+# (macOS can flag .pth files hidden, which Python 3.13 then ignores).
+pythonpath = ["."]

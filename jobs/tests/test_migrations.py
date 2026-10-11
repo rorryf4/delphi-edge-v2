@@ -2,7 +2,7 @@ from delphi_jobs.migrate import migrate
 
 EXPECTED_TABLES = {
     "public": {"sports", "leagues", "seasons", "teams", "team_seasons", "team_aliases",
-               "games", "game_external_ids", "results", "experts", "predictions"},
+               "games", "game_external_ids", "results", "outlets", "experts", "predictions"},
     "benchmark": {"market_lines"},
     "ops": {"schema_migrations"},
 }

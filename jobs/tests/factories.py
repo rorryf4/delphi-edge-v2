@@ -48,8 +48,17 @@ def make_game(conn, kickoff: datetime, home_slug: str = "kc", away_slug: str = "
     return {"id": row[0], "home": row[1], "away": row[2], "kickoff": kickoff}
 
 
-def expert_id(conn, slug: str = "covers") -> int:
-    return conn.execute("select id from experts where slug = %s", (slug,)).fetchone()[0]
+def expert_id(conn, slug: str = "test-writer") -> int:
+    """Id of a human expert, created on first use."""
+    row = conn.execute("select id from experts where slug = %s", (slug,)).fetchone()
+    if row:
+        return row[0]
+    return conn.execute(
+        """insert into experts (slug, name, kind, outlet_id)
+           values (%s, 'Test Writer', 'human', (select id from outlets where slug = 'covers'))
+           returning id""",
+        (slug,),
+    ).fetchone()[0]
 
 
 def add_prediction(conn, game: dict, **fields) -> int:

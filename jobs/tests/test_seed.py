@@ -17,15 +17,14 @@ def test_seed_creates_reference_data(db):
     assert count(db, "teams") == len(NFL) + len(CFB)
     assert count(db, "team_seasons") == len(NFL) + len(CFB)
     kinds = dict(db.execute("select slug, kind from experts").fetchall())
-    assert kinds == {
-        "delphiedge": "model", "market": "market", "covers": "human",
-        "sports-illustrated": "human", "cbs-sports": "human", "yahoo-sports": "human",
-    }
+    assert kinds == {"delphiedge": "model", "market": "market"}
+    outlets = {r[0] for r in db.execute("select slug from outlets").fetchall()}
+    assert outlets == {"covers", "sports-illustrated", "cbs-sports", "yahoo-sports"}
 
 
 def test_seed_is_idempotent(db):
     seed(db)
-    before = {t: count(db, t) for t in ("teams", "team_aliases", "team_seasons", "experts", "seasons")}
+    before = {t: count(db, t) for t in ("teams", "team_aliases", "team_seasons", "experts", "outlets", "seasons")}
     seed(db)
     after = {t: count(db, t) for t in before}
     assert before == after

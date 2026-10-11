@@ -31,7 +31,8 @@ Betting comes downstream of accuracy, not the other way around.
 ## Scorecard
 Everyone is graded on the same leaderboard:
 - DelphiEdge model
-- Pundits: Covers, Sports Illustrated, CBS Sports, Yahoo Sports (add more later)
+- Pundits: Covers, Sports Illustrated, CBS Sports, Yahoo Sports (add more later).
+  Pundits are tracked per writer, and each writer belongs to an outlet.
 - The market (closing line), as a BENCHMARK ONLY, never a model input
 
 Grading:
@@ -46,7 +47,7 @@ Grading:
 
 ## Data model (sport-agnostic)
 sports, leagues, seasons, games, teams, players, availability_reports,
-experts (human / model / market), predictions, results
+outlets, experts (human writers / model / market), predictions, results
 
 ## Tech
 - Next.js + TypeScript frontend on Vercel

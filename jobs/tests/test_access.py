@@ -21,7 +21,7 @@ def as_anon(db):
 
 @pytest.mark.parametrize("table", [
     "sports", "leagues", "seasons", "teams", "team_seasons",
-    "games", "results", "experts", "predictions",
+    "games", "results", "outlets", "experts", "predictions",
 ])
 def test_anon_can_read_scorecard_tables(as_anon, table):
     as_anon.execute(f"select * from public.{table}").fetchall()

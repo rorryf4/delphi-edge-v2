@@ -1,4 +1,4 @@
-"""Seed reference data: sports, leagues, seasons, experts, and teams.
+"""Seed reference data: sports, leagues, seasons, outlets, experts, and teams.
 
 Safe to re-run. Every write is an upsert, and teams are matched by their
 source ID (not their name), so renames update the existing team.
@@ -23,17 +23,18 @@ LEAGUES = [
     {"slug": "cfb", "sport": "football", "name": "College Football"},
 ]
 
+# Human experts are individual writers, created when their picks are first
+# imported. Only the model and market experts are fixed reference data.
+OUTLETS = [
+    {"slug": "covers", "name": "Covers", "url": "https://www.covers.com"},
+    {"slug": "sports-illustrated", "name": "Sports Illustrated", "url": "https://www.si.com"},
+    {"slug": "cbs-sports", "name": "CBS Sports", "url": "https://www.cbssports.com"},
+    {"slug": "yahoo-sports", "name": "Yahoo Sports", "url": "https://sports.yahoo.com"},
+]
+
 EXPERTS = [
-    {"slug": "delphiedge", "name": "DelphiEdge", "kind": "model", "outlet": None, "url": None},
-    {"slug": "market", "name": "Market (closing line)", "kind": "market", "outlet": None, "url": None},
-    {"slug": "covers", "name": "Covers", "kind": "human", "outlet": "Covers",
-     "url": "https://www.covers.com"},
-    {"slug": "sports-illustrated", "name": "Sports Illustrated", "kind": "human",
-     "outlet": "Sports Illustrated", "url": "https://www.si.com"},
-    {"slug": "cbs-sports", "name": "CBS Sports", "kind": "human", "outlet": "CBS Sports",
-     "url": "https://www.cbssports.com"},
-    {"slug": "yahoo-sports", "name": "Yahoo Sports", "kind": "human", "outlet": "Yahoo Sports",
-     "url": "https://sports.yahoo.com"},
+    {"slug": "delphiedge", "name": "DelphiEdge", "kind": "model", "url": None},
+    {"slug": "market", "name": "Market (closing line)", "kind": "market", "url": None},
 ]
 
 # Which external source identifies teams in each league.
@@ -77,13 +78,18 @@ def seed_core(conn: psycopg.Connection, season: int) -> dict[str, int]:
                on conflict (league_id, year) do nothing""",
             (league_ids[lg["slug"]], season, str(season)),
         )
+    for o in OUTLETS:
+        conn.execute(
+            """insert into outlets (slug, name, url) values (%(slug)s, %(name)s, %(url)s)
+               on conflict (slug) do update set name = excluded.name, url = excluded.url""",
+            o,
+        )
     for e in EXPERTS:
         conn.execute(
-            """insert into experts (slug, name, kind, outlet, url)
-               values (%(slug)s, %(name)s, %(kind)s, %(outlet)s, %(url)s)
+            """insert into experts (slug, name, kind, url)
+               values (%(slug)s, %(name)s, %(kind)s, %(url)s)
                on conflict (slug) do update set
-                 name = excluded.name, kind = excluded.kind,
-                 outlet = excluded.outlet, url = excluded.url""",
+                 name = excluded.name, kind = excluded.kind, url = excluded.url""",
             e,
         )
     return league_ids

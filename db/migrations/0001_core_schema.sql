@@ -141,17 +141,30 @@ create trigger results_updated_at before update on public.results
   for each row execute function public.set_updated_at();
 
 -- --------------------------------------------------------------- experts ---
+-- Publications that employ human experts (Covers, CBS Sports, ...).
+create table public.outlets (
+  id          integer generated always as identity primary key,
+  slug        text not null unique check (slug ~ '^[a-z0-9-]+$'),
+  name        text not null,
+  url         text,
+  created_at  timestamptz not null default now()
+);
+
+-- Human experts are tracked per writer, each tied to an outlet. The model
+-- and market experts have no outlet.
 create table public.experts (
   id          integer generated always as identity primary key,
   slug        text not null unique check (slug ~ '^[a-z0-9-]+$'),
   name        text not null,
   kind        text not null check (kind in ('human', 'model', 'market')),
-  outlet      text,
+  outlet_id   integer references public.outlets(id),
   url         text,
   active      boolean not null default true,
   created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  updated_at  timestamptz not null default now(),
+  check ((kind = 'human') = (outlet_id is not null))
 );
+create index experts_outlet_idx on public.experts(outlet_id);
 create trigger experts_updated_at before update on public.experts
   for each row execute function public.set_updated_at();
 

@@ -112,3 +112,14 @@ def test_one_closing_line_per_provider(seeded):
     with pytest.raises(psycopg.errors.UniqueViolation):
         with seeded.transaction():
             seeded.execute(sql, (game["id"], -4.0))
+
+
+def test_human_experts_need_an_outlet_and_others_must_not_have_one(seeded):
+    with pytest.raises(psycopg.errors.CheckViolation):
+        with seeded.transaction():
+            seeded.execute("insert into experts (slug, name, kind) values ('x', 'X', 'human')")
+    with pytest.raises(psycopg.errors.CheckViolation):
+        with seeded.transaction():
+            seeded.execute(
+                "insert into experts (slug, name, kind, outlet_id) "
+                "values ('y', 'Y', 'model', (select id from outlets where slug = 'covers'))")

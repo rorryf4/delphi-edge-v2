@@ -54,6 +54,7 @@ alter table public.team_aliases      enable row level security;
 alter table public.games             enable row level security;
 alter table public.game_external_ids enable row level security;
 alter table public.results           enable row level security;
+alter table public.outlets           enable row level security;
 alter table public.experts           enable row level security;
 alter table public.predictions       enable row level security;
 
@@ -64,6 +65,7 @@ create policy public_read on public.teams        for select using (true);
 create policy public_read on public.team_seasons for select using (true);
 create policy public_read on public.games        for select using (true);
 create policy public_read on public.results      for select using (true);
+create policy public_read on public.outlets      for select using (true);
 create policy public_read on public.experts      for select using (true);
 create policy public_read on public.predictions  for select using (true);
 -- team_aliases and game_external_ids are internal matching tables: no policy.
