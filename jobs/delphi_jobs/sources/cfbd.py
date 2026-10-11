@@ -55,17 +55,17 @@ SEASON_TYPES = ("regular", "postseason")
 
 
 def cfb_games(year: int) -> list[dict]:
-    """All games involving an FBS team, with each provider's line."""
-    games, lines = [], []
+    """All games involving an FBS team, regular season and postseason, with
+    each provider's line. Two API calls per run: the free tier allows 1,000
+    calls a month, and the schedule runs this about 170 times a month."""
+    params = {"year": year, "seasonType": "both"}
     with client() as http:
-        for season_type in SEASON_TYPES:
-            params = {"year": year, "seasonType": season_type}
-            response = http.get("/games", params={**params, "classification": "fbs"})
-            response.raise_for_status()
-            games += response.json()
-            response = http.get("/lines", params=params)
-            response.raise_for_status()
-            lines += response.json()
+        response = http.get("/games", params={**params, "classification": "fbs"})
+        response.raise_for_status()
+        games = response.json()
+        response = http.get("/lines", params=params)
+        response.raise_for_status()
+        lines = response.json()
     return cfb_game_records(games, lines)
 
 

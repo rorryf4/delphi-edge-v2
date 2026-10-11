@@ -47,3 +47,12 @@ row number. Re-importing a file is safe. Picks lock at kickoff.
 | ats_line | no | The line the writer quoted for the ats_pick team, e.g. `+3.5`. Blank means grade against the closing line. |
 | away_score, home_score | no | Predicted final score, both or neither |
 | source_url, notes | no | Where the pick came from; anything else worth keeping |
+
+## Automation
+
+`.github/workflows/update-data.yml` runs ingestion and grading every 3 hours
+on game days (Thu, Sat, Sun, Mon Eastern) and once a day otherwise. Run it by
+hand from the Actions tab with "Run workflow". It needs two repository
+secrets, `DATABASE_URL` and `CFBD_API_KEY`. It does not apply migrations: it
+stops with an error if any are pending, so apply them with
+`scripts/job delphi_jobs.migrate` after merging a new one.

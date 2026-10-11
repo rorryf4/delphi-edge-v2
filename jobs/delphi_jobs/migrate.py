@@ -22,7 +22,12 @@ create table if not exists ops.schema_migrations (
 
 
 def migration_files(directory: Path = MIGRATIONS_DIR) -> list[Path]:
-    return sorted(directory.glob("*.sql"))
+    files = sorted(directory.glob("*.sql"))
+    if not files:
+        # An empty list would make every check pass silently. This happens if
+        # the package is installed somewhere other than the repo checkout.
+        raise RuntimeError(f"No migrations found in {directory}. Install with: pip install -e ./jobs")
+    return files
 
 
 def applied_versions(conn: psycopg.Connection) -> set[str]:

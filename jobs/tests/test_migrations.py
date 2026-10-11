@@ -30,3 +30,10 @@ def test_rls_enabled_on_every_public_table(db):
            where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity"""
     ).fetchall()
     assert rows == []
+
+
+def test_missing_migrations_directory_is_an_error(tmp_path):
+    import pytest
+    from delphi_jobs.migrate import migration_files
+    with pytest.raises(RuntimeError, match="No migrations found"):
+        migration_files(tmp_path)

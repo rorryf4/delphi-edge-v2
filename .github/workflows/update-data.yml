@@ -1,0 +1,79 @@
+# Ingest games, scores and closing lines, then grade, on a schedule.
+#
+# Cron runs in UTC. US Eastern is UTC-4 (EDT) or UTC-5 (EST), so evening
+# games in Eastern time end after midnight UTC, on the next UTC day.
+#
+#   Game days (Thu, Sat, Sun, Mon Eastern): every 3 hours, plus the early
+#   UTC hours of Fri and Tue to catch the end of Thursday and Monday night.
+#   Other days (Tue, Wed, Fri Eastern): once daily.
+#
+# Each run uses 2 CollegeFootballData calls (free tier: 1,000 a month).
+#
+# Required repository secrets: DATABASE_URL, CFBD_API_KEY.
+
+name: Update data
+
+on:
+  schedule:
+    - cron: "15 */3 * * 0,1,4,6"   # Sun, Mon, Thu, Sat: every 3 hours
+    - cron: "15 2,5 * * 2,5"       # Tue, Fri early UTC: Mon/Thu night finals
+    - cron: "15 13 * * 2,3,5"      # Tue, Wed, Fri: daily (9:15 a.m. ET)
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "Leagues to ingest"
+        type: choice
+        options: ["nfl cfb", "nfl", "cfb"]
+        default: "nfl cfb"
+
+# Never run two updates at once; a queued run waits for the current one.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: jobs/pyproject.toml
+
+      # Editable install: the jobs find db/migrations relative to the checkout.
+      - name: Install jobs
+        run: pip install -e ./jobs
+
+      - name: Check secrets
+        run: |
+          missing=""
+          [ -n "$DATABASE_URL" ] || missing="$missing DATABASE_URL"
+          [ -n "$CFBD_API_KEY" ] || missing="$missing CFBD_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing"
+            exit 1
+          fi
+
+      - name: Check database migrations are applied
+        run: |
+          python -m delphi_jobs.migrate --status | tee status.txt
+          if grep -q PENDING status.txt; then
+            echo "::error::Migrations are pending. Apply them with scripts/job delphi_jobs.migrate first."
+            exit 1
+          fi
+
+      - name: Ingest games, scores and closing lines
+        run: python -m delphi_jobs.ingest_games --league ${{ inputs.league || 'nfl cfb' }}
+
+      - name: Grade
+        run: python -m delphi_jobs.grade
