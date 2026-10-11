@@ -25,6 +25,7 @@ Read spec.md first. No features outside the spec without updating the spec.
 - Tests: `./scripts/test.sh`
 - Migrate: `scripts/job delphi_jobs.migrate` (add `--status` to check)
 - Seed reference data: `scripts/job delphi_jobs.seed_reference`
+- Import pundit picks: `scripts/job delphi_jobs.import_picks <file.csv> [--dry-run]` (template: data/picks/template.csv)
 - Ingest games, scores, closing lines (whole season, idempotent): `scripts/job delphi_jobs.ingest_games`
 - Run Python via `scripts/job`, not the venv directly: macOS hides the editable
   install's .pth file here and Python 3.13 then skips it.
